@@ -157,7 +157,7 @@ bool Platform_Poll()
 void bread_main();
 
 // Default for Windows
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+void BreadPlatformInitialize()
 {
 	SetUnhandledExceptionFilter(&_exception_handler);
 
@@ -171,10 +171,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #endif
 
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+}
 
-	{
-		bread_main();
-	}
+void BreadPlatformShutdown()
+{
 	CoUninitialize();
 
 #if DEBUG
@@ -187,5 +187,3 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	ExitProcess(0);
 }
-
-

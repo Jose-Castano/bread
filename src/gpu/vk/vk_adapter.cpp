@@ -93,12 +93,12 @@ command_buffers(_allocator, 4)
     VKDebugInfo("Initializing Vulkan Driver...");
     
 #if defined(BREAD_ANDROID)
-    vk_lib = OS::load_library("libvulkan.so");
+    vk_lib = OS::load_library(_allocator, "libvulkan.so");
 #else
-    vk_lib = OS::load_library("vulkan-1.dll");
+    vk_lib = OS::load_library(_allocator, "vulkan-1.dll");
 #endif
 
-    Vulkan::load_core_procs(vk_lib);
+    Vulkan::load_core_procs(_allocator, vk_lib);
 
     info.api_version = Vulkan::get_api_version();
     VKFailOn(info.api_version < VK_API_VERSION_1_1, "vulkan 1.1 was expected");

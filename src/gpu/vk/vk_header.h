@@ -45,7 +45,7 @@ struct Vulkan
     static VkAllocationCallbacks* allocation_callbacks(VulkanAdapter* adapter);
     static const char* const* core_device_extensions();
 
-    static void load_core_procs(OS::Handle vk_lib);
+    static void load_core_procs(Mem::Allocator& allocator, OS::Handle vk_lib);
     static void load_instance_procs(VkInstance instance);
     static void load_device_procs(DeviceVulkanTable& table, VkDevice device);
 

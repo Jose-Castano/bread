@@ -52,7 +52,6 @@ void bread_main()
 
     Log::debug("[Runtime]: Initializing...");
 
-    OS::initialize(global_allocator);
     Display::initialize(global_allocator);
     Audio::initialize(global_allocator);
     GPU::initialize(global_allocator);
@@ -62,7 +61,6 @@ void bread_main()
     GPU::shutdown();
     Audio::shutdown();
     Display::shutdown();
-    OS::shutdown();
 }
 
 void bread_handle_event(const Event& event)
@@ -70,3 +68,12 @@ void bread_handle_event(const Event& event)
     app->handle_event(event);
 }
 
+void BreadPlatformInitialize();
+void BreadPlatformShutdown();
+
+void GlobalBreadEntryPoint()
+{
+    BreadPlatformInitialize();
+	bread_main();
+    BreadPlatformShutdown();
+}

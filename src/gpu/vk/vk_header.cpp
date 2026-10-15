@@ -37,14 +37,14 @@ VkAllocationCallbacks* Vulkan::allocation_callbacks(VulkanAdapter* adapter)
     return nullptr;
 }
 
-void Vulkan::load_core_procs(OS::Handle vk_lib)
+void Vulkan::load_core_procs(Mem::Allocator& allocator, OS::Handle vk_lib)
 {
-    VK_REQUIRED_LOAD(vkCreateInstance, vk_lib);
-    VK_REQUIRED_LOAD(vkDestroyInstance, vk_lib);
-    VK_REQUIRED_LOAD(vkEnumerateInstanceVersion, vk_lib);
-    VK_REQUIRED_LOAD(vkEnumerateInstanceLayerProperties, vk_lib);
-    VK_REQUIRED_LOAD(vkEnumerateInstanceExtensionProperties, vk_lib);
-    VK_REQUIRED_LOAD(vkGetInstanceProcAddr, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkCreateInstance, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkDestroyInstance, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkEnumerateInstanceVersion, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkEnumerateInstanceLayerProperties, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkEnumerateInstanceExtensionProperties, vk_lib);
+    VK_REQUIRED_LOAD(allocator, vkGetInstanceProcAddr, vk_lib);
 }
 
 void Vulkan::load_instance_procs(VkInstance instance)

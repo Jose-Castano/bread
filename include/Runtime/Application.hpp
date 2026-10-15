@@ -53,8 +53,9 @@ struct Application
             f64 render_time = 0;
         } debug_time;
 
-        f32 last_time = 0;
-        f32 time_accum = 0;
+        f64 program_start = 0;
+        f64 last_time = 0;
+        f64 time_accum = 0;
 
         i32 fps = 0;
         i32 fps_counter = 0;

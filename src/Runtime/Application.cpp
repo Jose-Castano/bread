@@ -10,7 +10,8 @@
 Application::Application(const ApplicationAllocateInfo& alloc_info)
 : data(alloc_info.allocator), window(Window::create())
 {
-    data.last_time = f32(OS::get_time());
+    data.program_start = OS::get_time();
+    data.last_time = OS::get_time();
     data.can_tick = true;
 }
 
@@ -66,7 +67,7 @@ void Application::tick()
         return;
     }
 
-    f32 current = f32(OS::get_time());
+    f32 current = OS::get_time() - data.program_start;
     data.delta_time = current - data.last_time;
     data.last_time = current;
 

@@ -25,11 +25,10 @@ static inline DWORD WINAPI _thread_handler(void* _arg)
     ExitThread(0);
 }
 
-Thread Thread::create(ThreadFn fn, Core::Opaque* arg)
+Thread::Thread(Mem::Allocator& allocator, ThreadFn fn, Core::Opaque* arg)
+: allocator(allocator)
 {
-    Thread thread = {};
-
-    Win32Thread* data = Win32OS::get_allocator().object<Win32Thread>();
+    Win32Thread* data = allocator.object<Win32Thread>();
     data->thread = nullptr;
     data->srw = SRWLOCK_INIT;
     data->state = Win32Thread::ThreadState::Unknown;
@@ -43,18 +42,17 @@ Thread Thread::create(ThreadFn fn, Core::Opaque* arg)
 
     ResumeThread(data->thread);
     
-    thread.impl = Core::Opaque::from(*data);
-    return thread;
+    impl = Core::Opaque::from(*data);
 }
 
-void Thread::destroy() const
+Thread::~Thread()
 {
     Win32Thread* data = _get_thread_data(impl);
 
     WaitForSingleObjectEx(data->thread, INFINITE, FALSE);
     CloseHandle(data->thread);
 
-    Win32OS::get_allocator().free(Mem::to_bytes(Slice(data, 1)));
+    allocator.free(Mem::to_bytes(Slice(impl, 1)));
 }
 
 bool Thread::join() const

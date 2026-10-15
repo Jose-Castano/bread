@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Header.hpp"
+#include "Mem/Allocator.hpp"
 
 
 
@@ -7,11 +8,11 @@ struct [[nodiscard]] Thread
 {
     using ThreadFn = void(*)(Core::Opaque*);
 	
+	Mem::Allocator& allocator;
 	Core::Opaque* impl;
 
-	static Thread create(ThreadFn fn, Core::Opaque* arg);
-
-	void destroy() const;
+	Thread(Mem::Allocator& allocator, ThreadFn fn, Core::Opaque* arg);
+	~Thread();
 
 	[[nodiscard]] bool join() const;
 };

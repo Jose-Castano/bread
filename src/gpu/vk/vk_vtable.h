@@ -15,8 +15,8 @@
 
 using VkFuncGeneric = void(*)();
 
-#define VK_REQUIRED_LOAD(name, lib) \
-    vk.name = reinterpret_cast<decltype(vk.name)>(OS::get_proc_address(lib, #name)); \
+#define VK_REQUIRED_LOAD(alltr, name, lib) \
+    vk.name = reinterpret_cast<decltype(vk.name)>(OS::get_proc_address(alltr, lib, #name)); \
     VKFailOn(vk.name == nullptr, "couldn't load the function {}", #name);
 
 #define VK_DEVICE_REQUIRED_LOAD(table, device, name) \
