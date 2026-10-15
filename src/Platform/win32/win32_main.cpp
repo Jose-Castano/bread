@@ -138,24 +138,6 @@ LONG _exception_handler(EXCEPTION_POINTERS* ep)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-bool Platform_Poll()
-{
-	MSG msg;
-	while(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE) != 0)
-	{
-		TranslateMessage(&msg);
-		DispatchMessageA(&msg);
-		if (msg.message == WM_QUIT)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void bread_main();
-
 // Default for Windows
 void BreadPlatformInitialize()
 {

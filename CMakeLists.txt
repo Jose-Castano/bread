@@ -37,9 +37,7 @@ file(GLOB ENGINE_SRC
     
     src/platform/intrinsics.cpp
     
-    src/Runtime/Application.cpp
-    
-    src/Main.cpp
+    src/EntryPoint.cpp
 )
 
 file(GLOB VULKAN_ADAPTER_SRC

@@ -3,8 +3,7 @@
 #include "input/input.h"
 
 
-void bread_handle_event(const Event& event);
-
+static inline Win32Display::InternalData& _get_data();
 static inline Win32Display::WindowData& _get_window_data(Display::WindowID id);
 
 static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -16,14 +15,13 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 	switch (msg)
 	{
 	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
+		break;
 	case WM_CLOSE:
 	{
 		InputEventWindowClose event = {};
 		event.type = EventType::WindowClose;
 		event.window = window_id;
-		bread_handle_event(event);
+		_get_data().handle_event_fn(event);
 	}
 		break;
 	case WM_CAPTURECHANGED:
@@ -54,7 +52,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 			event.position = Input::get_mouse_position();
 			event.pressed = false;
 			event.button = btn;
-			bread_handle_event(event);
+			_get_data().handle_event_fn(event);
 		}
 	}
 		break;
@@ -112,7 +110,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		event.position = screen_space_position;
 		event.pressed = Input::get_mouse_state(button);
 		event.button = button;
-		bread_handle_event(event);
+		_get_data().handle_event_fn(event);
 		return 0;
 	}
 	case WM_SYSKEYDOWN:
@@ -148,7 +146,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		event.pressed = Input::get_key_state(Key(wparam)) == KeyState::Pressed;
 		event.key = static_cast<Key>(wparam);
 
-		bread_handle_event(event);
+		_get_data().handle_event_fn(event);
 		return 0;
 	}
 	break;
@@ -165,7 +163,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 			window_data.window_rect.bottom - window_data.window_rect.top
 		);
 		
-		bread_handle_event(event);
+		_get_data().handle_event_fn(event);
 
 		return 0;
 	}
@@ -184,7 +182,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		InputEventMouseMove event = {};
 		event.type = EventType::MouseMove;
 		event.position = screen_space_position;
-		bread_handle_event(event);
+		_get_data().handle_event_fn(event);
 		return 0;
 	}
 	break;
@@ -194,20 +192,20 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 }
 
 alignas(alignof(Win32Display::InternalData)) static u8 place_holder_memory[sizeof(Win32Display::InternalData)]{};
-static Win32Display::InternalData& get_data()
+static inline Win32Display::InternalData& _get_data()
 {
 	return *reinterpret_cast<Win32Display::InternalData*>(place_holder_memory);
 }
 
 static inline Win32Display::WindowData& _get_window_data(Display::WindowID id)
 {
-	return get_data().windows.get(id);
+	return _get_data().windows.get(id);
 }
 
 void Display::initialize(Mem::Allocator& allocator)
 {
 	// Ensures constructors are call.
-    Core::Mem::Placement(get_data(), allocator);
+    Core::Mem::Placement(_get_data(), allocator);
 
 	WNDCLASSEXA wc = {};
 	wc.cbSize = sizeof(wc);
@@ -218,17 +216,32 @@ void Display::initialize(Mem::Allocator& allocator)
 	wc.hIconSm = LoadIconA(0, IDI_APPLICATION);
 	RegisterClassExA(&wc);
 
-	GetClientRect(GetDesktopWindow(), &get_data().fullscreen_rect);
+	GetClientRect(GetDesktopWindow(), &_get_data().fullscreen_rect);
 }
 
 void Display::shutdown()
 {
-	Core::Mem::Destruct(get_data());
+	Core::Mem::Destruct(_get_data());
+}
+
+void Display::poll()
+{
+	MSG msg;
+	while(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE) != 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessageA(&msg);
+	}
+}
+
+void Display::set_handle_event(HandleEventFn&& handle_event_fn)
+{
+	_get_data().handle_event_fn = handle_event_fn;
 }
 
 Display::WindowID Display::window_create()
 {
-	Display::WindowID new_id = get_data().windows.add(Win32Display::WindowData());
+	Display::WindowID new_id = _get_data().windows.add(Win32Display::WindowData());
 	Win32Display::WindowData& new_window = _get_window_data(new_id);
 
 	RECT window_rect = {};
@@ -261,7 +274,7 @@ void Display::window_destroy(WindowID window_id)
 	
 	DestroyWindow(window_data.handle);
 
-	get_data().windows.remove(window_id);
+	_get_data().windows.remove(window_id);
 }
 
 Vector2I Display::window_get_size(Display::WindowID window_id)

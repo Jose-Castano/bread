@@ -6,6 +6,7 @@
 
 
 struct SurfaceID;
+struct Event;
 
 struct Display
 {
@@ -15,6 +16,7 @@ struct Display
     static constexpr const char* DefaultTitle = "Bread!!!";
 
     using WindowID = Collections::ID<u32, struct __WindowTag>;
+    using HandleEventFn = void(*)(const Event&);
 
     struct VTable
     {
@@ -31,6 +33,9 @@ struct Display
 
     static void initialize(Mem::Allocator& allocator);
     static void shutdown();
+
+    static void poll();
+    static void set_handle_event(HandleEventFn&& handle_event_fn);
 
     static WindowID window_create();
     static void window_destroy(WindowID window_id);
