@@ -32,18 +32,8 @@ void BreadPlatformShutdown();
 
 extern void BreadMain(const Runtime::ProcessInit& process_info);
 
-void GlobalBreadEntryPoint()
+void _get_arguments(Collections::Array<Collections::StringView>& arguments, Collections::StringView command_line)
 {
-    BreadPlatformInitialize();
-	
-    Mem::GenericAllocator global_allocator;
-
-    // TODO: This only works for windows
-
-    Collections::StringView command_line = OS::get_command_line();
-
-    // parse until space
-    Collections::Array<Collections::StringView> arguments{global_allocator, 4, {}};
     usize begin = Core::MaxValue<usize>;
     for(usize i = 0; i < command_line.len; i++)
     {
@@ -62,6 +52,27 @@ void GlobalBreadEntryPoint()
             begin = i;
         }
     }
+
+    if (begin != Core::MaxValue<usize>)
+    {
+        (void)arguments.emplace(command_line.add(begin).slice(command_line.len - begin));
+    }
+}
+
+void GlobalBreadEntryPoint()
+{
+    BreadPlatformInitialize();
+	
+    Mem::GenericAllocator global_allocator;
+
+    // TODO: This only works for windows
+
+    Collections::StringView command_line = OS::get_command_line();
+
+    // parse until space
+    Collections::Array<Collections::StringView> arguments{global_allocator, 4, {}};
+
+    _get_arguments(arguments, command_line);
 
     BreadMain(
         {
