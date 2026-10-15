@@ -149,10 +149,6 @@ void BreadPlatformInitialize()
 		{
 			AllocConsole();
 		}
-
-		DWORD mode;
-		GetConsoleMode(IO::File::get_stdout().handle, &mode);
-		SetConsoleMode(IO::File::get_stdout().handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 	}
 #endif
 

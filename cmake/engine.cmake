@@ -146,7 +146,7 @@ function(bread_project)
     if(ANDROID)
         add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
     elseif(WIN32)
-        add_executable(${PROJECT_NAME} WIN32 ${PROJECT_SOURCES})
+        add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
     endif()
 
     # Copying the bread assets to the game assets folder by default
