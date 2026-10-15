@@ -1,7 +1,5 @@
-#include "Audio/Audio.hpp"
-#include "display/display.h"
+#include "Collections/Array.hpp"
 #include "Debug/Fail.hpp"
-#include "gpu/gpu.h"
 #include "Mem/GenericAllocator.hpp"
 #include "os/os.h"
 #include "Runtime/Runtime.hpp"
@@ -40,9 +38,35 @@ void GlobalBreadEntryPoint()
 	
     Mem::GenericAllocator global_allocator;
 
+    // TODO: This only works for windows
+
+    Collections::StringView command_line = OS::get_command_line();
+
+    // parse until space
+    Collections::Array<Collections::StringView> arguments{global_allocator, 4, {}};
+    usize begin = Core::MaxValue<usize>;
+    for(usize i = 0; i < command_line.len; i++)
+    {
+        char c = command_line[i];
+        if(c == ' ' && begin == Core::MaxValue<usize>)
+        {
+            continue;
+        }
+        else if(c == ' ' && begin != Core::MaxValue<usize>)
+        {
+            (void)arguments.emplace(command_line.add(begin).slice(i - begin));
+            begin = Core::MaxValue<usize>;
+        }
+        else if(c != ' ' && begin == Core::MaxValue<usize>)
+        {
+            begin = i;
+        }
+    }
+
     BreadMain(
         {
             .allocator = global_allocator,
+            .arguments = arguments.slice(),
         }
     );
 

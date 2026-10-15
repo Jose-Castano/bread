@@ -26,6 +26,12 @@ usize OS::get_page_size()
     return info.dwPageSize;
 }
 
+Collections::StringView OS::get_command_line()
+{
+    LPSTR str = ::GetCommandLineA();
+    return Collections::StringView(str, Core::NullTerminatedLen(str));
+}
+
 OS::Handle OS::load_library(Mem::Allocator& allocator, Collections::StringView lib_path)
 {
     Slice path = allocator.array<char>(lib_path.len + 1);

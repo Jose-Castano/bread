@@ -158,14 +158,4 @@ void BreadPlatformInitialize()
 void BreadPlatformShutdown()
 {
 	CoUninitialize();
-
-#if DEBUG
-	{
-		u8 bytes[2] = {};
-		Format::format<false>(IO::File::get_stdout().writer(), "Press enter to close the console...");
-		IO::File::get_stdin().read(bytes);
-	}
-#endif
-
-	ExitProcess(0);
 }

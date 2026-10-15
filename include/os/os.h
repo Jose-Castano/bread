@@ -31,6 +31,7 @@ struct OS
 
     static void exit(u64 code);
     static usize get_page_size();
+    static Collections::StringView get_command_line();
 
     static Handle load_library(Mem::Allocator& allocator, Collections::StringView lib_path);
     static void unload_library(Handle library);
