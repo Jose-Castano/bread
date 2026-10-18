@@ -116,12 +116,22 @@ OS::QueryMemory OS::query_memory(const Slice<u8>& memory)
     };    
 }
 
-bool OS::set_current_directory(Mem::Allocator& allocator, Collections::StringView dir)
+bool OS::set_current_directory(Mem::Allocator& allocator, Collections::StringView dir_path)
 {
-    Slice path = allocator.array<char>(dir.len + 1);
-    Mem::copy(path, dir);
+    Slice path = allocator.array<char>(dir_path.len + 1);
+    Mem::copy(path, dir_path);
     bool result = SetCurrentDirectoryA(path.ptr()) == TRUE;
     allocator.free(Mem::to_bytes(path));
 
     return result;
+}
+
+bool OS::create_directory(Mem::Allocator& allocator, Collections::StringView dir_path)
+{
+    Slice path = allocator.array<char>(dir_path.len + 1);
+    Mem::copy(path, dir_path);
+    bool result = CreateDirectoryA(path.ptr(), NULL) == TRUE;
+    allocator.free(Mem::to_bytes(path));
+
+    return result;   
 }

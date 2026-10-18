@@ -41,5 +41,6 @@ struct OS
     static void unmap_memory(const Slice<u8>& memory);
     static QueryMemory query_memory(const Slice<u8>& memory);
 
-    static bool set_current_directory(Mem::Allocator& allocator, Collections::StringView dir);
+    static bool set_current_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
+    static bool create_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
 };
