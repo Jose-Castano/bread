@@ -1,4 +1,4 @@
-#include "Platform/win32/win32_os.h"
+#include "Platform/Win32/Win32OS.hpp"
 
 #include "Debug/Fail.hpp"
 
@@ -32,23 +32,23 @@ Collections::StringView OS::get_command_line()
     return Collections::StringView(str, Core::NullTerminatedLen(str));
 }
 
-OS::Handle OS::load_library(Mem::Allocator& allocator, Collections::StringView lib_path)
+MemoryAddress OS::load_library(Mem::Allocator& allocator, Collections::StringView lib_path)
 {
     Slice path = allocator.array<char>(lib_path.len + 1);
     Mem::copy(path, lib_path);
 
-    OS::Handle library = reinterpret_cast<OS::Handle>(LoadLibraryA(path.ptr()));
+    MemoryAddress library = reinterpret_cast<MemoryAddress>(LoadLibraryA(path.ptr()));
     allocator.free(Mem::to_bytes(path));
 
     return library;
 }
 
-void OS::unload_library(OS::Handle library)
+void OS::unload_library(MemoryAddress library)
 {
     FreeLibrary(reinterpret_cast<HMODULE>(library));
 }
 
-OS::VoidFunction OS::get_proc_address(Mem::Allocator& allocator, OS::Handle library, Collections::StringView symbol_name)
+OS::VoidFunction OS::get_proc_address(Mem::Allocator& allocator, MemoryAddress library, Collections::StringView symbol_name)
 {
     Slice symbol = allocator.array<char>(symbol_name.len + 1);
     Mem::copy(symbol, symbol_name);
@@ -126,12 +126,26 @@ bool OS::set_current_directory(Mem::Allocator& allocator, Collections::StringVie
     return result;
 }
 
-bool OS::create_directory(Mem::Allocator& allocator, Collections::StringView dir_path)
+Collections::ResultOnly<OS::CreateDirectoryError> OS::create_directory(Mem::Allocator& allocator, Collections::StringView dir_path)
 {
     Slice path = allocator.array<char>(dir_path.len + 1);
     Mem::copy(path, dir_path);
-    bool result = CreateDirectoryA(path.ptr(), NULL) == TRUE;
+    HRESULT result = CreateDirectoryA(path.ptr(), NULL);
     allocator.free(Mem::to_bytes(path));
 
-    return result;   
+    if(result == 0)
+    {
+        DWORD error_code = GetLastError();
+        
+        if(error_code == ERROR_PATH_NOT_FOUND)
+        {
+            return CreateDirectoryError::PathNotFound;
+        }
+        else if(error_code == ERROR_ALREADY_EXISTS)
+        {
+            return CreateDirectoryError::AlreadyExists;
+        }
+    }
+
+    return {};
 }

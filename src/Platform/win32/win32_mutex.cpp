@@ -1,4 +1,4 @@
-#include "Platform/win32/win32_mutex.h"
+#include "Platform/Win32/win32_mutex.h"
 
 
 static inline void _mutex_lock(SRWLOCK* srw)

@@ -4,7 +4,7 @@
 #include "gpu/gpu.h"
 #include "gpu/vk/vk_utils.h"
 #include "Math/funcs.h"
-#include "os/os.h"
+#include "OS/OS.hpp"
 
 
 VkDriverRenderPassKey VkDriverRenderPassKey::from_rendering_info(const GPU::RenderingInfo& rendering_info)

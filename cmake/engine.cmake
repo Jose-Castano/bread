@@ -10,11 +10,6 @@ set(BREAD_MAJOR 0)
 set(BREAD_MINOR 1)
 set(BREAD_PATCH 0)
 
-# MSVC
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    set(CMAKE_MSVC_RUNTIME_CHECKS OFF)
-endif()
 # Expected to be the top directory of the current project
 set(CMAKE_PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -61,53 +56,40 @@ endif()
 # Configuration per compiler
 # Some warnings needs to be treated as error because we eliminated the compiler runtime,
 # so now is more easy to create bugs.
-if(MSVC)
-    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} 
-        "/W4" "/Oi" "/Zl" "/GS-" "/GR-" "/EHs-" "/EHc-" "/Zc:threadSafeInit-" "/Zc:preprocessor"
-        "/wd4201" "/we4244" "/we4701" "/we4700" "/we4101" "/we4703" "/we4189" "/we4834" "/we4100"
-        "/we26493"
-    )
-
-    set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DBREAD_MSVC")
-else()
-    if("${BREAD_TARGET_ARCH}" STREQUAL "X64")
-        set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-msse4.1")
-    endif()
-    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
-        "-fno-rtti" "-fno-exceptions" "-Wall" "-Wextra" "-ffast-math" "-Werror" "-Wpedantic"
-        "-Wno-language-extension-token" "-Wno-gnu-anonymous-struct" "-Wno-error=gnu-anonymous-struct"
-        "-Wuninitialized" "-Wconditional-uninitialized" "-Wno-strict-prototypes"
-    )
-    if(BREAD_BUILD_TYPE STREQUAL "debugbuild")
-        set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
-            "-fsanitize-trap=all"
-        )
-        set(BREAD_LINK_OPTIONS ${BREAD_COMPILE_OPTIONS}
-            "-fsanitize-trap=all"
-        )
-    endif()
-    if(NOT ANDROID)
-        set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
-            "-fuse-ld=lld-link" "-flto"
-        )
-        set(BREAD_LINK_OPTIONS ${BREAD_LINK_OPTIONS} "-flto")
-    endif()
-
-    set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DBREAD_CLANG")
+# NOTE: Clang only
+if("${BREAD_TARGET_ARCH}" STREQUAL "X64")
+    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-msse4.1")
 endif()
+set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
+    "-fno-rtti" "-fno-exceptions" "-Wall" "-Wextra" "-ffast-math" "-Werror" "-Wpedantic"
+    "-Wno-language-extension-token" "-Wno-gnu-anonymous-struct" "-Wno-error=gnu-anonymous-struct"
+    "-Wuninitialized" "-Wconditional-uninitialized" "-Wno-strict-prototypes"
+)
+if(BREAD_BUILD_TYPE STREQUAL "debugbuild")
+    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
+        "-fsanitize-trap=all"
+    )
+    set(BREAD_LINK_OPTIONS ${BREAD_COMPILE_OPTIONS}
+        "-fsanitize-trap=all"
+    )
+endif()
+if(NOT ANDROID)
+    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS}
+        "-fuse-ld=lld-link" "-flto"
+    )
+    set(BREAD_LINK_OPTIONS ${BREAD_LINK_OPTIONS} "-flto")
+endif()
+
+set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DBREAD_CLANG")
 
 # Build type
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} ${BREAD_DEBUG_DEFINITIONS})
 elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    if(NOT MSVC)
-        set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-O3" "-ffast-math")
-    endif()
+    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-O3" "-ffast-math")
     set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DRELEASE")
 elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    if(NOT MSVC)
-        set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-O3" "-ffast-math")
-    endif()
+    set(BREAD_COMPILE_OPTIONS ${BREAD_COMPILE_OPTIONS} "-O3" "-ffast-math")
     set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} ${BREAD_DEBUG_DEFINITIONS})
 endif()
 
@@ -120,13 +102,8 @@ if(ANDROID)
     set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DBREAD_ANDROID")
 elseif(WIN32)
     set(BREAD_BUILD_DEFINITIONS ${BREAD_BUILD_DEFINITIONS} "-DBREAD_WIN32")
-    if(MSVC)
-        set(BREAD_LINK_OPTIONS ${BREAD_LINK_OPTIONS} /NODEFAULTLIB)
-        set(BREAD_EXE_LINK_OPTIONS ${BREAD_EXE_LINK_OPTIONS} /NODEFAULTLIB /ENTRY:GlobalBreadEntryPoint)
-    else()
-        set(BREAD_LINK_OPTIONS ${BREAD_LINK_OPTIONS} -nostdlib)
-        set(BREAD_EXE_LINK_OPTIONS ${BREAD_EXE_LINK_OPTIONS} -Wl,/ENTRY:GlobalBreadEntryPoint)
-    endif()
+    set(BREAD_LINK_OPTIONS ${BREAD_LINK_OPTIONS} -nostdlib)
+    set(BREAD_EXE_LINK_OPTIONS ${BREAD_EXE_LINK_OPTIONS} -Wl,/ENTRY:GlobalBreadEntryPoint)
 endif()
 
 # Utility functions
@@ -147,26 +124,6 @@ function(bread_project)
         add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
     elseif(WIN32)
         add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
-    endif()
-
-    # Copying the bread assets to the game assets folder by default
-    #add_custom_command(
-    #    TARGET ${PROJECT_NAME}
-    #    POST_BUILD
-    #    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/bread/assets ${CMAKE_SOURCE_DIR}/assets
-    #)
-
-    if(MSVC)
-        foreach(flag_var
-            CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG
-            CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELWITHDEBINFO
-            CMAKE_CXX_FLAGS_MINSIZEREL
-        )
-            string(REPLACE "/RTC1" "" ${flag_var} "${${flag_var}}")
-            string(REPLACE "/RTCsu" "" ${flag_var} "${${flag_var}}")
-            string(REPLACE "/EHsc" "" ${flag_var} "${${flag_var}}")
-            set(${flag_var} "${${flag_var}}" CACHE STRING "" FORCE)
-        endforeach()
     endif()
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${BREAD_BUILD_DEFINITIONS} BREAD_PROJECT_COMPILATION)

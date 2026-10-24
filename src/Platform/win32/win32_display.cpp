@@ -1,4 +1,4 @@
-#include "Platform/win32/win32_display.h"
+#include "Platform/Win32/win32_display.h"
 
 #include "input/input.h"
 

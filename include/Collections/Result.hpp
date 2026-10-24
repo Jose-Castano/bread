@@ -1,22 +1,12 @@
 #pragma once
 #include "Core/Header.hpp"
-#include "Debug/Fail.hpp"
 
 
 namespace Collections
 {
 
-template<typename E>
-struct BadResult
-{
-	E error;
-
-	constexpr operator E() const { return error; }
-};
-
-
 template<typename T, typename E>
-struct [[nodiscard]] Result
+struct ResultStorage
 {
 	union
 	{
@@ -24,51 +14,103 @@ struct [[nodiscard]] Result
 		E u_error;
 	};
 
+	ResultStorage(const T& v)
+	: u_value(v)
+	{}
+
+	ResultStorage(const E& e)
+	: u_error(e)
+	{}
+};
+
+template<typename E>
+struct ResultStorage<void, E>
+{
+	E u_error;
+
+	ResultStorage() {}
+
+	ResultStorage(const E& e)
+	: u_error(e)
+	{}
+};
+
+template<typename T, typename E>
+struct [[nodiscard]] Result
+{
+	using Type = T;
+	using Error = E;
+
+	ResultStorage<Type, Error> storage;
 	bool has_value;
 
-	constexpr Result(const T& v)
-		: u_value(v), has_value(true)
+	template<typename V>
+	constexpr Result(const V& v)
+	requires(!Core::IsSame<V, void> && Core::IsSame<V, Type>)
+	: storage(v), has_value(true)
 	{}
 
-	constexpr Result(const E& e)
-		: u_error(e), has_value(false)
+	constexpr Result()
+	requires(Core::IsSame<Type, void>)
+	: has_value(true)
 	{}
 
-	constexpr Result(const BadResult<E>& e)
-		: u_error(e), has_value(false)
+	constexpr Result(const Error& e)
+	: storage(e), has_value(false)
 	{}
 
-	constexpr operator bool() const { return has_value; }
+	constexpr bool fail() const { return !has_value; }
 
-	constexpr auto value() const
-	{
-		if (has_value)
-		{
-			return u_value;
-		}
+	constexpr auto value() const;
+	constexpr auto error() const;
 
-		FailOn(true, "the result hasn't a value");
-		return T();
-	}
-
-	constexpr auto error() const
-	{
-		FailOn(has_value, "the result has a value");
-		return u_error;
-	}
-
-	template<typename F, typename FunctionType = Core::FunctionDecomposed<F>>
-	requires(Core::IsSame<typename FunctionType::ReturnType, T>)
+	template<typename F>
+	requires(Core::Returns<F, void>)
 	constexpr auto or_else(F&& f) const
 	{
-		if (has_value)
+		if constexpr(!Core::IsSame<T, void>)
 		{
-			return u_value;
+			if (has_value)
+			{
+				return storage.u_value;
+			}
 		}
 		
-		return f(u_error);
+		return f(storage.u_error);
 	}
 	
 };
+
+template<Core::Enum E>
+using ResultOnly = Result<void, E>;
+
+}
+
+#include "Debug/Fail.hpp"
+
+namespace Collections
+{
+
+template<typename T, typename E>
+constexpr auto Result<T, E>::value() const
+{
+	if constexpr (!Core::IsSame<Type, void>)
+	{
+		if (has_value)
+		{
+			return storage.u_value;
+		}
+	}
+
+	FailOn(true, "the result hasn't a value");
+	return T();
+}
+
+template<typename T, typename E>
+constexpr auto Result<T, E>::error() const
+{
+	FailOn(has_value, "the result has a value");
+	return storage.u_error;
+}
 
 }

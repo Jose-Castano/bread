@@ -1,5 +1,5 @@
 #pragma once
-#include "os/semaphore.h"
+#include "OS/semaphore.h"
 #include "Platform/platform_header.h"
 
 

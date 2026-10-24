@@ -262,6 +262,9 @@ inline constexpr bool IsSameValue<T, Value, Value> = true;
 template<typename T, T Value, T... Args>
 inline constexpr bool IsAnyOfValue = (IsSameValue<T, Value, Args> || ...);
 
+template<typename T>
+inline constexpr bool IsEnum = __is_enum(T);
+
 
 // Conditional Selection
 template<bool Value, typename T1, typename T2>

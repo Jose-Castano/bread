@@ -1,4 +1,4 @@
 #pragma once
-#include "os/atomic.h"
+#include "OS/atomic.h"
 #include "Platform/platform_header.h"
 

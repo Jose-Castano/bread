@@ -1,7 +1,7 @@
 #include "Collections/Array.hpp"
 #include "Debug/Fail.hpp"
 #include "Mem/GenericAllocator.hpp"
-#include "os/os.h"
+#include "OS/OS.hpp"
 #include "Runtime/Runtime.hpp"
 
 

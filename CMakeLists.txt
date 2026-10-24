@@ -67,15 +67,15 @@ elseif(WIN32)
     file(GLOB PLATFORM_SRC
         src/audio/wasapi/WASAPIDriver.cpp
 
-        src/platform/win32/win32_atomic.cpp
-        src/platform/win32/win32_display.cpp
-        src/platform/win32/win32_file.cpp
-        src/platform/win32/win32_main.cpp
-        src/platform/win32/win32_math.cpp
-        src/platform/win32/win32_mutex.cpp
-        src/platform/win32/win32_os.cpp
-        src/platform/win32/win32_semaphore.cpp
-        src/platform/win32/win32_thread.cpp
+        src/platform/Win32/win32_atomic.cpp
+        src/platform/Win32/win32_display.cpp
+        src/platform/Win32/win32_file.cpp
+        src/platform/Win32/win32_main.cpp
+        src/platform/Win32/win32_math.cpp
+        src/platform/Win32/win32_mutex.cpp
+        src/platform/Win32/win32OS.cpp
+        src/platform/Win32/win32_semaphore.cpp
+        src/platform/Win32/win32_thread.cpp
     )
     set(PLATFORM_LIBRARIES opengl32 xaudio2 dbghelp ole32.lib)
 endif()

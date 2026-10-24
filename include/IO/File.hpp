@@ -1,6 +1,6 @@
 #pragma once
 #include "Collections/StringView.hpp"
-#include "os/os.h"
+#include "Core/Macros.hpp"
 
 
 template<typename T>
@@ -28,7 +28,7 @@ struct File
         Create = Bit(2),
     };
 
-    OS::Handle handle;
+    MemoryAddress handle;
 
     static File& get_stderr();
     static File& get_stdout();

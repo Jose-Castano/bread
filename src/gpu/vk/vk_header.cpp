@@ -4,7 +4,7 @@
 #include "gpu/vk/vk_adapter.h"
 #include "gpu/vk/vk_vtable.h"
 #include "Mem/Utils.hpp"
-#include "os/os.h"
+#include "OS/OS.hpp"
 #include "Platform/platform_header.h"
 
 
@@ -37,7 +37,7 @@ VkAllocationCallbacks* Vulkan::allocation_callbacks(VulkanAdapter* adapter)
     return nullptr;
 }
 
-void Vulkan::load_core_procs(Mem::Allocator& allocator, OS::Handle vk_lib)
+void Vulkan::load_core_procs(Mem::Allocator& allocator, MemoryAddress vk_lib)
 {
     VK_REQUIRED_LOAD(allocator, vkCreateInstance, vk_lib);
     VK_REQUIRED_LOAD(allocator, vkDestroyInstance, vk_lib);

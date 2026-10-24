@@ -5,8 +5,8 @@
 #include "gpu/vk/vk_header.h"
 #include "Math/hash.h"
 #include "Mem/LinearAllocator.hpp"
-#include "os/os.h"
-#include "os/mutex.h"
+#include "OS/OS.hpp"
+#include "OS/mutex.h"
 
 
 struct VulkanAdapter;
@@ -342,7 +342,7 @@ struct VulkanAdapter final : InternalGPU::GPUAdapter
 		uint32_t api_version;
 	} info;
 
-	OS::Handle vk_lib;
+	MemoryAddress vk_lib;
 
 	VkInstance instance;
 	VkSurfaceKHR dummy_surface;

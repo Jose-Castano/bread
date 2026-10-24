@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Mem/Mem.hpp"
 #include "Core/Templates.hpp"
-
+#include <type_traits>
 
 namespace Core
 {
@@ -74,5 +74,8 @@ concept Copyable = ConstructibleFrom<T, const T&> && AssignableFrom<T&, const T&
 
 template<typename T>
 concept Movable = ConstructibleFrom<T, T&&> && AssignableFrom<T&, T>;
+
+template<typename T>
+concept Enum = IsEnum<T>; // NOTE: only checked on clang
 
 }

@@ -1,6 +1,6 @@
-#include "Platform/win32/win32_thread.h"
+#include "Platform/Win32/win32_thread.h"
 
-#include "Platform/win32/win32_os.h"
+#include "Platform/Win32/Win32OS.hpp"
 
 
 static inline Win32Thread* _get_thread_data(Core::Opaque* impl)

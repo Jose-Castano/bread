@@ -1,4 +1,4 @@
-#include "Platform/win32/win32_semaphore.h"
+#include "Platform/Win32/win32_semaphore.h"
 
 #include "Debug/Assertion.hpp"
 

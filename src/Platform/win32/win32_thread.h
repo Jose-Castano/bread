@@ -1,5 +1,5 @@
 #pragma once
-#include "os/thread.h"
+#include "OS/thread.h"
 #include "Platform/platform_header.h"
 
 

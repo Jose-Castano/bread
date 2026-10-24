@@ -1,9 +1,21 @@
-#include "Platform/win32/win32_file.h"
+#include "Platform/Win32/win32_file.h"
 
 #include "Collections/StringView.hpp"
 #include "Mem/Allocator.hpp"
 #include "Platform/platform_header.h"
 
+
+static bool _is_internal_file_handle(MemoryAddress handle)
+{
+	if(handle == reinterpret_cast<MemoryAddress>(GetStdHandle(STD_ERROR_HANDLE))
+		|| handle == reinterpret_cast<MemoryAddress>(GetStdHandle(STD_OUTPUT_HANDLE))
+		|| handle == reinterpret_cast<MemoryAddress>(GetStdHandle(STD_INPUT_HANDLE)))
+	{
+		return true;
+	}
+
+	return false;
+}
 
 namespace IO
 {
@@ -112,15 +124,12 @@ File::File(Mem::Allocator& allocator, Collections::StringView path, OpenMode mod
 
 	allocator.free(Mem::to_bytes(tmp));
 
-	handle = reinterpret_cast<OS::Handle>(file);
+	handle = reinterpret_cast<MemoryAddress>(file);
 }
 
 File::~File()
 {
-	if(handle == 0
-		|| handle == GetStdHandle(STD_ERROR_HANDLE)
-		|| handle == GetStdHandle(STD_OUTPUT_HANDLE)
-		|| handle == GetStdHandle(STD_INPUT_HANDLE))
+	if(handle == 0 || _is_internal_file_handle(handle))
 	{
 		return;
 	}
@@ -130,28 +139,19 @@ File::~File()
 
 void File::write(const Slice<const u8>& bytes)
 {
-	DebugAssert(handle != 0
-		|| handle == GetStdHandle(STD_ERROR_HANDLE)
-		|| handle == GetStdHandle(STD_OUTPUT_HANDLE)
-		|| handle == GetStdHandle(STD_INPUT_HANDLE), "invalid file handler");
+	DebugAssert(handle != 0 || _is_internal_file_handle(handle), "invalid file handler");
 	(void)WriteFile(reinterpret_cast<HANDLE>(handle), bytes.ptr(), static_cast<DWORD>(bytes.len), 0, 0);
 }
 
 void File::put(u8 value)
 {
-	DebugAssert(handle != 0
-		|| handle == GetStdHandle(STD_ERROR_HANDLE)
-		|| handle == GetStdHandle(STD_OUTPUT_HANDLE)
-		|| handle == GetStdHandle(STD_INPUT_HANDLE), "invalid file handler");
+	DebugAssert(handle != 0 || _is_internal_file_handle(handle), "invalid file handler");
 	WriteFile(reinterpret_cast<HANDLE>(handle), &value, 1, 0, 0);
 }
 
 void File::read(Slice<u8> bytes)
 {
-	DebugAssert(handle != 0
-		|| handle == GetStdHandle(STD_ERROR_HANDLE)
-		|| handle == GetStdHandle(STD_OUTPUT_HANDLE)
-		|| handle == GetStdHandle(STD_INPUT_HANDLE), "invalid file handler");
+	DebugAssert(handle != 0 || _is_internal_file_handle(handle), "invalid file handler");
 	DWORD bytes_readed = 0;
 	(void)ReadFile(reinterpret_cast<HANDLE>(handle), bytes.ptr(), static_cast<DWORD>(bytes.len), &bytes_readed, 0);
 	DebugAssert(bytes_readed <= bytes.len, "read overflows");
@@ -159,10 +159,7 @@ void File::read(Slice<u8> bytes)
 
 void File::flush()
 {
-	DebugAssert(handle != 0
-		|| handle == GetStdHandle(STD_ERROR_HANDLE)
-		|| handle == GetStdHandle(STD_OUTPUT_HANDLE)
-		|| handle == GetStdHandle(STD_INPUT_HANDLE), "invalid file handler");
+	DebugAssert(handle != 0 || _is_internal_file_handle(handle), "invalid file handler");
 	(void)FlushFileBuffers(reinterpret_cast<HANDLE>(handle));
 }
 

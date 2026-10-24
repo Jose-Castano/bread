@@ -3,7 +3,7 @@
 #include "Debug/Fail.hpp"
 #include "Debug/Log.hpp"
 #include "Mem/Utils.hpp"
-#include "os/os.h"
+#include "OS/OS.hpp"
 
 
 // TODO: Free memory is filled with 0xDD
