@@ -21,7 +21,7 @@ struct File
     DisableCopy(File);
     DisableMove(File);
 
-    enum OpenMode
+    enum class OpenMode
     {
         Read = Bit(0),
         Write = Bit(1),
@@ -50,4 +50,6 @@ struct File
 };
 
 }
+
+EnableBitOp(IO::File::OpenMode);
 

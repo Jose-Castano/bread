@@ -99,17 +99,17 @@ File::File(Mem::Allocator& allocator, Collections::StringView path, OpenMode mod
 	Mem::copy(tmp, path);
 	UINT access = 0;
 
-	if(Core::HasValue(mode & File::Read))
+	if(Core::HasValue(mode & File::OpenMode::Read))
 	{
 		access |= GENERIC_READ;
 	}
-	if(Core::HasValue(mode & File::Write))
+	if(Core::HasValue(mode & File::OpenMode::Write))
 	{
 		access |= GENERIC_WRITE;
 	}
 
 	UINT open_or_create = 0;
-	if(Core::HasValue(mode & File::Create))
+	if(Core::HasValue(mode & File::OpenMode::Create))
 	{
 		open_or_create |= CREATE_ALWAYS;
 	}
