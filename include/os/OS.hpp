@@ -44,4 +44,6 @@ namespace OS
     };
 
     Collections::ResultOnly<CreateDirectoryError> create_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
+
+    Collections::ResultOnly<CreateDirectoryError> create_directories(Mem::Allocator& allocator, Collections::StringView dir_path);
 }

@@ -34,6 +34,8 @@ file(GLOB ENGINE_SRC
     src/Mem/GenericAllocator.cpp
     src/Mem/PageAllocator.cpp
     src/Mem/LinearAllocator.cpp
+
+    src/OS/OS.cpp
     
     src/platform/intrinsics.cpp
     
