@@ -14,8 +14,8 @@ struct ResultStorage
 		E u_error;
 	};
 
-	ResultStorage(const T& v)
-	: u_value(v)
+	ResultStorage(T&& v)
+	: u_value(Core::Forward<T>(v))
 	{}
 
 	ResultStorage(const E& e)
@@ -45,9 +45,9 @@ struct [[nodiscard]] Result
 	bool has_value;
 
 	template<typename V>
-	constexpr Result(const V& v)
+	constexpr Result(V&& v)
 	requires(!Core::IsSame<V, void> && Core::IsSame<V, Type>)
-	: storage(v), has_value(true)
+	: storage(Core::Forward<V>(v)), has_value(true)
 	{}
 
 	constexpr Result()
