@@ -20,9 +20,6 @@ file(GLOB ENGINE_SRC
 
     src/Debug/Assertion.cpp
 
-    src/display/display.cpp
-    src/display/window.cpp
-    
     src/gpu/gpu.cpp
     
     src/input/input.cpp
@@ -70,14 +67,14 @@ elseif(WIN32)
         src/audio/wasapi/WASAPIDriver.cpp
 
         src/platform/Win32/win32_atomic.cpp
-        src/platform/Win32/win32_display.cpp
         src/platform/Win32/win32_file.cpp
         src/platform/Win32/win32_main.cpp
         src/platform/Win32/win32_math.cpp
         src/platform/Win32/win32_mutex.cpp
-        src/platform/Win32/win32OS.cpp
         src/platform/Win32/win32_semaphore.cpp
         src/platform/Win32/win32_thread.cpp
+        src/platform/Win32/Win32OS.cpp
+        src/platform/Win32/Win32Window.cpp
     )
     set(PLATFORM_LIBRARIES opengl32 xaudio2 dbghelp ole32.lib)
 endif()

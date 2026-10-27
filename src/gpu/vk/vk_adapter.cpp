@@ -1,6 +1,6 @@
 #include "gpu/vk/vk_adapter.h"
 
-#include "display/display.h"
+#include "Display/Window.hpp"
 #include "gpu/gpu.h"
 #include "gpu/vk/vk_utils.h"
 #include "Math/funcs.h"

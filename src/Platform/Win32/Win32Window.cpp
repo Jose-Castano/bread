@@ -1,16 +1,19 @@
-#include "Platform/Win32/win32_display.h"
+#include "Platform/Win32/Win32Window.hpp"
 
 #include "input/input.h"
 
 
-static inline Win32Display::InternalData& _get_data();
-static inline Win32Display::WindowData& _get_window_data(Display::WindowID id);
+static inline Win32Window& _get_window_impl(Core::Opaque* impl);
 
 static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	Display::WindowID window_id = Display::WindowID(
-		GetWindowLongPtrA(handle, GWLP_USERDATA) & Core::MaxValue<Display::WindowID::Type>
-	);
+	if(GetWindowLongPtrA(handle, GWLP_USERDATA) == 0)
+	{
+		return DefWindowProcA(handle, msg, wparam, lparam);
+	}
+
+	Window& window = *reinterpret_cast<Window*>(GetWindowLongPtrA(handle, GWLP_USERDATA));
+	Win32Window& window_data = _get_window_impl(window.impl);
 
 	switch (msg)
 	{
@@ -18,16 +21,16 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		break;
 	case WM_CLOSE:
 	{
-		InputEventWindowClose event = {};
-		event.type = EventType::WindowClose;
-		event.window = window_id;
-		_get_data().handle_event_fn(event);
+		InputEventWindowClose event =
+		{
+			Event{EventType::WindowClose},
+			window
+		};
+		window_data.handle_event_fn(window_data.user_data, event);
 	}
 		break;
 	case WM_CAPTURECHANGED:
 	{
-		Win32Display::WindowData& window_data = _get_window_data(window_id);
-		
 		if (window_data.mouse_captured)
 		{
 			window_data.mouse_captured = false;
@@ -52,7 +55,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 			event.position = Input::get_mouse_position();
 			event.pressed = false;
 			event.button = btn;
-			_get_data().handle_event_fn(event);
+			window_data.handle_event_fn(window_data.user_data, event);
 		}
 	}
 		break;
@@ -80,15 +83,11 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 
 		if(Input::get_mouse_state(button))
 		{
-			Win32Display::WindowData& window_data = _get_window_data(window_id);
-
 			SetCapture(handle);
     		window_data.mouse_captured = true;
 		}
 		else
 		{
-			Win32Display::WindowData& window_data = _get_window_data(window_id);
-
 			if(window_data.mouse_captured)
 			{
 				ReleaseCapture();
@@ -110,7 +109,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		event.position = screen_space_position;
 		event.pressed = Input::get_mouse_state(button);
 		event.button = button;
-		_get_data().handle_event_fn(event);
+		window_data.handle_event_fn(window_data.user_data, event);
 		return 0;
 	}
 	case WM_SYSKEYDOWN:
@@ -146,25 +145,25 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		event.pressed = Input::get_key_state(Key(wparam)) == KeyState::Pressed;
 		event.key = static_cast<Key>(wparam);
 
-		_get_data().handle_event_fn(event);
+		window_data.handle_event_fn(window_data.user_data, event);
 		return 0;
 	}
 	break;
 	case WM_SIZE:
 	{
-		Win32Display::WindowData& window_data = _get_window_data(window_id);
 		GetWindowRect(handle, &window_data.window_rect);
 
-		InputEventWindowResize event = {};
-		event.type = EventType::WindowResize;
-		event.window = window_id;
-		event.size = Vector2I(
-			window_data.window_rect.right - window_data.window_rect.left,
-			window_data.window_rect.bottom - window_data.window_rect.top
-		);
+		InputEventWindowResize event =
+		{
+			Event{EventType::WindowResize},
+			window,
+			Vector2I(
+				window_data.window_rect.right - window_data.window_rect.left,
+				window_data.window_rect.bottom - window_data.window_rect.top
+			),
+		};
 		
-		_get_data().handle_event_fn(event);
-
+		window_data.handle_event_fn(window_data.user_data, event);
 		return 0;
 	}
 	break;
@@ -182,7 +181,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		InputEventMouseMove event = {};
 		event.type = EventType::MouseMove;
 		event.position = screen_space_position;
-		_get_data().handle_event_fn(event);
+		window_data.handle_event_fn(window_data.user_data, event);
 		return 0;
 	}
 	break;
@@ -191,58 +190,38 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 	return DefWindowProcA(handle, msg, wparam, lparam);
 }
 
-alignas(alignof(Win32Display::InternalData)) static u8 place_holder_memory[sizeof(Win32Display::InternalData)]{};
-static inline Win32Display::InternalData& _get_data()
+static inline Win32Window& _get_window_impl(Core::Opaque* impl)
 {
-	return *reinterpret_cast<Win32Display::InternalData*>(place_holder_memory);
+	return *impl->cast<Win32Window*>();
 }
 
-static inline Win32Display::WindowData& _get_window_data(Display::WindowID id)
+static void _try_initialize_class()
 {
-	return _get_data().windows.get(id);
-}
+	static bool initialized = false;
 
-void Display::initialize(Mem::Allocator& allocator)
-{
-	// Ensures constructors are call.
-    Core::Mem::Placement(_get_data(), allocator);
-
-	WNDCLASSEXA wc = {};
-	wc.cbSize = sizeof(wc);
-	wc.lpfnWndProc = _default_window_proc;
-	wc.lpszClassName = Win32Display::WindowClassName;
-	wc.hIcon = LoadIconA(0, IDI_APPLICATION);
-	wc.hCursor = LoadCursorA(0, IDC_ARROW);
-	wc.hIconSm = LoadIconA(0, IDI_APPLICATION);
-	RegisterClassExA(&wc);
-
-	GetClientRect(GetDesktopWindow(), &_get_data().fullscreen_rect);
-}
-
-void Display::shutdown()
-{
-	Core::Mem::Destruct(_get_data());
-}
-
-void Display::poll()
-{
-	MSG msg;
-	while(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE) != 0)
+	if(!initialized)
 	{
-		TranslateMessage(&msg);
-		DispatchMessageA(&msg);
+		WNDCLASSEXA wc = {};
+		wc.cbSize = sizeof(wc);
+		wc.lpfnWndProc = &_default_window_proc;
+		wc.lpszClassName = Win32Window::WindowClassName;
+		wc.hIcon = LoadIconA(0, IDI_APPLICATION);
+		wc.hCursor = LoadCursorA(0, IDC_ARROW);
+		wc.hIconSm = LoadIconA(0, IDI_APPLICATION);
+		RegisterClassExA(&wc);
 	}
 }
 
-void Display::set_handle_event(HandleEventFn&& handle_event_fn)
+Window::Window(Mem::Allocator& allocator, Core::Opaque* user_data, Display::HandleEventFn handle_event)
+: allocator(allocator)
 {
-	_get_data().handle_event_fn = handle_event_fn;
-}
+	_try_initialize_class();
 
-Display::WindowID Display::window_create()
-{
-	Display::WindowID new_id = _get_data().windows.add(Win32Display::WindowData());
-	Win32Display::WindowData& new_window = _get_window_data(new_id);
+	Win32Window& window_data = *allocator.object<Win32Window>();
+	impl = Core::Opaque::from(window_data);
+
+	window_data.user_data = user_data;
+	window_data.handle_event_fn = handle_event;
 
 	RECT window_rect = {};
 	window_rect.right = Display::DefaultWidth;
@@ -250,36 +229,46 @@ Display::WindowID Display::window_create()
 
 	AdjustWindowRectExForDpi(&window_rect, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW, GetDpiForSystem());
 
-	new_window.window_rect = window_rect;
-	new_window.handle = CreateWindowExA(
-		WS_EX_OVERLAPPEDWINDOW, Win32Display::WindowClassName, Display::DefaultTitle, WS_OVERLAPPEDWINDOW,
+	window_data.window_rect = window_rect;
+	window_data.handle = CreateWindowExA(
+		WS_EX_OVERLAPPEDWINDOW, Win32Window::WindowClassName, Display::DefaultTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, window_rect.right - window_rect.left, window_rect.bottom - window_rect.top,
 		0, 0, GetModuleHandleA(nullptr), 0
 	);
 
-	SetWindowLongPtrA(new_window.handle, GWLP_USERDATA, static_cast<LONG_PTR>(new_id.integer()));
+	SetWindowLongPtrA(window_data.handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
-	ShowWindow(new_window.handle, SW_SHOW);
+	ShowWindow(window_data.handle, SW_SHOW);
 
-	new_window.surface = GPU::surface_create({.window_native_handle = window_get_native_handle(new_id)});
-
-	return new_id;
+	window_data.surface = GPU::surface_create({.window_native_handle = get_native_handle()});
 }
 
-void Display::window_destroy(WindowID window_id)
+Window::~Window()
 {
-	Win32Display::WindowData& window_data = _get_window_data(window_id);
+	Win32Window& window_data = _get_window_impl(impl);
 
 	GPU::surface_destroy(window_data.surface);
 	
 	DestroyWindow(window_data.handle);
 
-	_get_data().windows.remove(window_id);
+	allocator.free(Mem::to_bytes(Slice<u8>(impl->cast<u8*>(), 1)));
 }
 
-Vector2I Display::window_get_size(Display::WindowID window_id)
+void Window::poll()
 {
-	Win32Display::WindowData& window_data = _get_window_data(window_id);
+	Win32Window& window_data = _get_window_impl(impl);
+	
+	MSG msg;
+	while(PeekMessageA(&msg, window_data.handle, 0, 0, PM_REMOVE) != 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessageA(&msg);
+	}
+}
+
+Vector2I Window::get_size() const
+{
+	Win32Window& window_data = _get_window_impl(impl);
 	RECT rect;
 	GetClientRect(window_data.handle, &rect);
 
@@ -289,9 +278,9 @@ Vector2I Display::window_get_size(Display::WindowID window_id)
 	);
 }
 
-void Display::window_set_size(Display::WindowID window_id, const Vector2I& new_size)
+void Window::set_size(const Vector2I& new_size)
 {
-	Win32Display::WindowData& window_data = _get_window_data(window_id);
+	Win32Window& window_data = _get_window_impl(impl);
 
 	RECT rect = { 0, 0, new_size.x, new_size.y };
 	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_OVERLAPPEDWINDOW);
@@ -305,15 +294,36 @@ void Display::window_set_size(Display::WindowID window_id, const Vector2I& new_s
 	);
 }
 
-MemoryAddress Display::window_get_native_handle(Display::WindowID window_id)
+MemoryAddress Window::get_native_handle() const
 {
-	Win32Display::WindowData& window_data = _get_window_data(window_id);
+	Win32Window& window_data = _get_window_impl(impl);
 	return MemoryAddress(window_data.handle);
 }
 
-GPU::SurfaceID Display::window_get_surface(WindowID window_id)
+GPU::SurfaceID Window::get_surface() const
 {
-	Win32Display::WindowData& window_data = _get_window_data(window_id);
+	Win32Window& window_data = _get_window_impl(impl);
 	return window_data.surface;
 }
 
+bool Window::get_resizable() const
+{
+	Win32Window& window_data = _get_window_impl(impl);
+	LONG style = ::GetWindowLongA(window_data.handle, GWL_STYLE);
+	return style & (WS_SIZEBOX);
+}
+
+void Window::set_resizable(bool resizable)
+{
+	Win32Window& window_data = _get_window_impl(impl);
+	LONG style = ::GetWindowLongA(window_data.handle, GWL_STYLE);
+
+	if(resizable)
+	{
+		::SetWindowLongA(window_data.handle, GWL_STYLE, style | (WS_SIZEBOX | WS_MAXIMIZEBOX));
+	}
+	else
+	{
+		::SetWindowLongA(window_data.handle, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
+	}
+}

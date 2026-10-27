@@ -1,6 +1,6 @@
 #pragma once
 #include "Math/vec2.h"
-#include "display/display.h"
+#include "Display/Display.hpp"
 
 
 enum class EventType
@@ -130,13 +130,13 @@ struct InputEventMouseButton : Event
 
 struct InputEventWindowResize : Event
 {
-    Display::WindowID window;
+    Window& window;
     Vector2I size;
 };
 
 struct InputEventWindowClose : Event
 {
-    Display::WindowID window;
+    Window& window;
 };
 
 enum class KeyState
