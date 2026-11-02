@@ -62,7 +62,7 @@ static int32_t engine_handle_input(android_app*, AInputEvent* event)
         i32 keycode = AKeyEvent_getKeyCode(event);
 
 		InputEventKey event = {};
-        event.type = EventType::KeyPress;
+        event.type = EventType::Key;
 		event.pressed = action == AKEY_EVENT_ACTION_DOWN;
 		event.key = MappedKeycodes[keycode];
 
