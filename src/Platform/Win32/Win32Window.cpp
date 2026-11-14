@@ -141,7 +141,7 @@ static inline LRESULT WINAPI _default_window_proc(HWND handle, UINT msg, WPARAM 
 		Input::update_key_state(Key(wparam), new_key_state);
 
 		InputEventKey event = {};
-		event.type = EventType::KeyPress;
+		event.type = EventType::Key;
 		event.pressed = Input::get_key_state(Key(wparam)) == KeyState::Pressed;
 		event.key = static_cast<Key>(wparam);
 
