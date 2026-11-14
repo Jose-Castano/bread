@@ -1,5 +1,6 @@
 #include "Platform/Win32/Win32OS.hpp"
 
+#include "Collections/Array.hpp"
 #include "Debug/Fail.hpp"
 
 
@@ -124,6 +125,17 @@ bool OS::set_current_directory(Mem::Allocator& allocator, Collections::StringVie
     allocator.free(Mem::to_bytes(path));
 
     return result;
+}
+
+Collections::String OS::get_current_directory(Mem::Allocator& allocator)
+{
+    DWORD size = GetCurrentDirectoryA(0, nullptr);
+
+    Collections::Array<char> path{allocator, size, {}};
+    path.resize(size);
+    GetCurrentDirectoryA(size, path.slice().ptr());
+
+    return Collections::String(allocator, 0, Collections::StringView(path.slice().ptr(), path.count - 1));
 }
 
 Collections::ResultOnly<OS::CreateDirectoryError> OS::create_directory(Mem::Allocator& allocator, Collections::StringView dir_path)

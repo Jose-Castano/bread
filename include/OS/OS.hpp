@@ -1,4 +1,5 @@
 #pragma once
+#include "Collections/String.hpp"
 #include "Collections/StringView.hpp"
 #include "Collections/Result.hpp"
 #include "Mem/Allocator.hpp"
@@ -36,6 +37,7 @@ namespace OS
     QueryMemory query_memory(const Slice<u8>& memory);
 
     bool set_current_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
+    Collections::String get_current_directory(Mem::Allocator& allocator);
 
     enum class CreateDirectoryError
     {
