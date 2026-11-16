@@ -1,4 +1,5 @@
 #pragma once
+#include "Collections/Array.hpp"
 #include "Collections/String.hpp"
 #include "Collections/StringView.hpp"
 #include "Collections/Result.hpp"
@@ -22,6 +23,30 @@ namespace OS
         usize region_size;
     };
 
+    enum class CreateDirectoryError
+    {
+        PathNotFound,
+        AlreadyExists,
+    };
+
+    enum class ProcessFlags
+    {
+        Default = 0,
+        NoWindow = Bit(0),
+        NewConsole = Bit(1),
+    };
+
+    enum class CreateProcessError
+    {
+        Fail,
+        FileNotFound,
+    };
+
+    enum class EnumFilesError
+    {
+        Fail,
+    };
+
     f64 get_time();
 
     void exit(u64 code);
@@ -39,13 +64,15 @@ namespace OS
     bool set_current_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
     Collections::String get_current_directory(Mem::Allocator& allocator);
 
-    enum class CreateDirectoryError
-    {
-        PathNotFound,
-        AlreadyExists,
-    };
-
     Collections::ResultOnly<CreateDirectoryError> create_directory(Mem::Allocator& allocator, Collections::StringView dir_path);
 
     Collections::ResultOnly<CreateDirectoryError> create_directories(Mem::Allocator& allocator, Collections::StringView dir_path);
+
+    Collections::ResultOnly<CreateProcessError> create_process(Mem::Allocator& allocator, Collections::StringView app_path,
+        Collections::StringView command_line, ProcessFlags flags);
+
+    Collections::ResultOnly<EnumFilesError> enum_files_in_directory(Mem::Allocator& allocator, Collections::StringView dir_path,
+        Collections::Array<Collections::String>& files);
 }
+
+EnableBitOp(OS::ProcessFlags);

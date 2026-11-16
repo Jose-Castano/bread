@@ -160,7 +160,7 @@ function(bread_package)
     elseif(NOT IS_ABSOLUTE "${PACKAGE_ASSETS}")
         set(PACKAGE_ASSETS ${CMAKE_SOURCE_DIR}/${PACKAGE_ASSETS})
     endif()
-    
+
     add_custom_command(
         TARGET ${PACKAGE_NAME}
         POST_BUILD
