@@ -31,41 +31,39 @@ struct FormatArgument
 template<typename T>
 constexpr FormatType __GetFormatType()
 {
-	using TypeNoCR = Core::RemoveConst<Core::RemoveReference<T>>;
-
-	if constexpr(Core::IsSame<TypeNoCR, bool>)
+	if constexpr(Core::IsSame<T, bool>)
 	{
 		return FormatType::Bool;
 	}
-	else if constexpr(Core::IsSigned<TypeNoCR>)
+	else if constexpr(Core::IsSigned<T>)
 	{
 		return FormatType::Signed;
 	}
-	else if constexpr(Core::IsUnsigned<TypeNoCR>)
+	else if constexpr(Core::IsUnsigned<T>)
 	{
 		return FormatType::Unsigned;
 	}
-	else if constexpr(Core::IsSame<TypeNoCR, f32>)
+	else if constexpr(Core::IsSame<T, f32>)
 	{
 		return FormatType::Float32;
 	}
-	else if constexpr(Core::IsSame<TypeNoCR, f64>)
+	else if constexpr(Core::IsSame<T, f64>)
 	{
 		return FormatType::Float64;
 	}
-	else if constexpr(Core::IsPointer<TypeNoCR>)
+	else if constexpr(Core::IsPointer<T>)
 	{
 		return FormatType::Pointer;
 	}
-	else if constexpr(Core::IsSame<TypeNoCR, Collections::StringView>)
+	else if constexpr(Core::IsSame<T, Collections::StringView>)
 	{
 		return FormatType::StringView;
 	}
-	else if constexpr(Core::IsArrayOf<TypeNoCR, char>)
+	else if constexpr(Core::IsArrayOf<T, char>)
 	{
 		return FormatType::CString;
 	}
-	else if constexpr(Core::IsSlice<TypeNoCR>)
+	else if constexpr(Core::IsSlice<T>)
 	{
 		return FormatType::Slice;
 	}

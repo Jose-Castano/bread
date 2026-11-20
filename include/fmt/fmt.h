@@ -122,7 +122,8 @@ struct Formatter
 template<typename T>
 void __format_single_argument(const IO::Writer& writer, T&& arg)
 {
-	static constexpr Format::FormatType type = Format::__GetFormatType<T>();
+	using Type = Core::RemoveCVRef<T>;
+	static constexpr Format::FormatType type = Format::__GetFormatType<Type>();
 	if constexpr(type == Format::FormatType::Bool)
 	{
 		static constexpr Collections::StringView true_str = "true";
@@ -132,7 +133,7 @@ void __format_single_argument(const IO::Writer& writer, T&& arg)
 	}
 	else if constexpr(type == Format::FormatType::Signed || type == Format::FormatType::Unsigned)
 	{
-		__format_integer<10, T>(writer, arg);
+		__format_integer<10, Type>(writer, arg);
 	}
 	else if constexpr(type == Format::FormatType::Float32)
 	{
@@ -153,7 +154,7 @@ void __format_single_argument(const IO::Writer& writer, T&& arg)
 	else if constexpr(type == Format::FormatType::CString)
 	{
 		// A CString always contains an extra byte for '\0'
-		static constexpr usize len = Core::Extent<T> - 1;
+		static constexpr usize len = Core::Extent<Type> - 1;
 		writer.write(Mem::to_const_bytes(Slice(arg, len)));
 	}
 	else if constexpr(type == Format::FormatType::Slice)
@@ -171,7 +172,7 @@ void __format_single_argument(const IO::Writer& writer, T&& arg)
 	}
 	else
 	{
-		Formatter<Core::RemoveCVRef<T>>::format_custom(writer, Core::Forward<T>(arg));
+		Formatter<Type>::format_custom(writer, Core::Forward<T>(arg));
 	}
 }
 
